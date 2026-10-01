@@ -1,0 +1,365 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Семейный пульс</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: слева телефон родителя на тетрадной клетке, справа панель аналитика с живым журналом событий и воронкой WAEP */
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --sunk:#E3E8F1; --fg:#17203A; --muted:#5B6683; --line:#CBD3E3;
+  --ink:#2A4BA0; --ink-soft:#DCE4F7; --margin:#D6453D; --ok:#1F8A5B; --ok-soft:#DDF2E7; --warn:#B7700F; --warn-soft:#FBEBD2;
+  --grid:rgba(42,75,160,.09);
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1424; --surface:#182036; --sunk:#111829; --fg:#E7ECF7; --muted:#9AA6C4; --line:#2B3654;
+  --ink:#8FA9F2; --ink-soft:#243463; --margin:#F07A72; --ok:#5CCB94; --ok-soft:#173A2A; --warn:#E9A94A; --warn-soft:#3A2B12;
+  --grid:rgba(143,169,242,.07); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1424; --surface:#182036; --sunk:#111829; --fg:#E7ECF7; --muted:#9AA6C4; --line:#2B3654;
+  --ink:#8FA9F2; --ink-soft:#243463; --margin:#F07A72; --ok:#5CCB94; --ok-soft:#173A2A; --warn:#E9A94A; --warn-soft:#3A2B12;
+  --grid:rgba(143,169,242,.07); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding:24px 16px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font:700 clamp(22px,3vw,30px)/1.15 var(--f-display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.seg-label{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;width:100%}
+.main{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+
+/* телефон */
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:34px;padding:12px;box-shadow:0 18px 40px -24px rgba(23,32,58,.45);max-width:400px;width:100%;justify-self:center}
+.screen{border-radius:24px;min-height:640px;position:relative;overflow:hidden;
+  background-color:var(--surface);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:18px 18px}
+.screen::before{content:"";position:absolute;top:0;bottom:0;left:30px;width:1.5px;background:var(--margin);opacity:.55}
+.status{display:flex;justify-content:space-between;font:500 12px var(--f-mono);color:var(--muted);padding:12px 18px 4px 44px}
+.view{padding:8px 18px 22px 44px;display:grid;gap:14px}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h2{font:700 20px/1.2 var(--f-display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.fact{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.mark{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font:700 13px var(--f-mono)}
+.m-up{background:var(--ok-soft);color:var(--ok)} .m-str{background:var(--ink-soft);color:var(--ink)} .m-stuck{background:var(--warn-soft);color:var(--warn)}
+.fact p{margin:0} .fact small{color:var(--muted);display:block}
+.actions{display:grid;gap:8px}
+.btn{font:600 14px var(--f-body);border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink);justify-content:center}
+.btn.done{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn .t{color:var(--muted);font-weight:500;font-size:12px}
+.btn.done .t{color:var(--ok)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--margin);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 13px var(--f-body);padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--sunk);color:var(--fg);cursor:pointer}
+.chip:hover{border-color:var(--ink)}
+.offer{border-color:var(--warn);background:var(--warn-soft)}
+.offer p{margin:0}
+.bars{display:flex;gap:4px;align-items:end;height:46px}
+.bars div{flex:1;background:var(--ink);opacity:.8;border-radius:3px 3px 0 0;position:relative}
+.bars div.cap{background:var(--warn);opacity:1}
+.bars-l{display:flex;gap:4px;font:500 10px var(--f-mono);color:var(--muted)} .bars-l span{flex:1;text-align:center}
+.pin{display:flex;gap:10px;justify-content:center}
+.pin span{width:44px;height:52px;border:1.5px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 22px var(--f-mono);background:var(--surface)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{font:600 18px var(--f-mono);padding:12px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.task{font-size:14px} .task ol{margin:4px 0 0;padding-left:18px;display:grid;gap:4px}
+.toast{position:absolute;left:44px;right:18px;bottom:16px;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:12px;font-weight:500;font-size:14px;transition:opacity .25s,transform .25s}
+.toast[data-show="false"]{opacity:0;transform:translateY(8px);pointer-events:none}
+.back{background:none;border:0;color:var(--ink);font:600 14px var(--f-body);padding:0;cursor:pointer;justify-self:start}
+
+/* аналитика */
+.panel{display:grid;gap:16px;min-width:0}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:12px;min-width:0}
+.box-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.box-h h3{font:600 13px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.funnel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.step{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:4px;background:var(--sunk)}
+.step b{font:600 13px var(--f-body)} .step small{color:var(--muted);font-size:12px;line-height:1.35}
+.step[data-on="true"]{background:var(--ok-soft);border-color:var(--ok)}
+.state{justify-self:start;font:600 12px var(--f-mono);padding:4px 8px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.step[data-on="true"] .state{background:var(--ok);color:var(--surface)}
+.waep{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.pill{font:600 13px var(--f-body);padding:6px 12px;border-radius:999px}
+.pill.no{background:var(--sunk);color:var(--muted)} .pill.yes{background:var(--ok);color:var(--surface)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kv div{border-top:1px solid var(--line);padding-top:6px}
+.kv b{display:block;font:500 22px var(--f-display);font-variant-numeric:tabular-nums}
+.kv span{font-size:12px;color:var(--muted)}
+.log{font:12px/1.55 var(--f-mono);background:var(--sunk);border-radius:10px;padding:10px 12px;max-height:300px;overflow:auto;margin:0;white-space:pre-wrap;word-break:break-word}
+.log .ev{color:var(--ink);font-weight:500} .log .ts{color:var(--muted)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools button{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:7px 12px;cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px}
+.scroll{overflow-x:auto}
+code{font:12px var(--f-mono);background:var(--sunk);padding:1px 5px;border-radius:5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Семейный пульс</h1>
+      <p class="sub">Прототип родительского мини-сервиса Учи.ру. Воскресный дайджест на три минуты: что было за неделю у ребёнка и одно дело, которое можно сделать вместе. Каждое действие справа пишется в журнал событий и двигает метрику WAEP.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Пример семьи">
+      <span class="seg-label">Пример семьи из сегмента</span>
+      <button data-seg="controller" aria-pressed="true">Контролёр</button>
+      <button data-seg="invisible" aria-pressed="false">Невидимый</button>
+      <button data-seg="co_learner" aria-pressed="false">Соучастник</button>
+      <button data-seg="delegating" aria-pressed="false">Делегирующий</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="phone" aria-label="Экран телефона родителя">
+      <div class="screen">
+        <div class="status"><span id="clock">вс, 20:04</span><span>Учи.ру · Родителям</span></div>
+        <div class="view" id="view"></div>
+        <div class="toast" id="toast" data-show="false" role="status"></div>
+      </div>
+    </div>
+
+    <section class="panel" aria-label="Панель аналитика">
+      <div class="box">
+        <div class="box-h"><h3>Воронка недели</h3><button class="tools-btn" id="reset" style="font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:6px 12px;cursor:pointer">Начать неделю заново</button></div>
+        <div class="funnel" id="funnel"></div>
+        <div class="waep"><span>Эта семья в WAEP недели:</span><span class="pill no" id="waep">нет</span><span class="hint" id="waepWhy">Нужно одно действие: похвала, совместное задание или цель.</span></div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Результаты A/B-теста, 8 недель</h3><span class="hint">40 000 семей, 50/50</span></div>
+        <div class="kv">
+          <div><b>6,1% → 17,7%</b><span>WAEP, North Star</span></div>
+          <div><b>+1,7%</b><span>задания ребёнка в неделю</span></div>
+          <div><b>+0,7 п.п.</b><span>конверсия в подписку</span></div>
+          <div><b>−28%</b><span>сессии ребёнка в аккаунте родителя</span></div>
+          <div><b>9,3%</b><span>отписки от дайджеста (порог 10%)</span></div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Журнал событий</h3>
+          <div class="tools"><button id="copy">Скопировать JSON</button></div></div>
+        <pre class="log" id="log" aria-live="polite"></pre>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>План трекинга</h3></div>
+        <div class="scroll"><table>
+          <thead><tr><th>Событие</th><th>Когда</th><th>Метрика</th></tr></thead>
+          <tbody>
+            <tr><td><code>digest_delivered</code></td><td>Дайджест ушёл в push / почту</td><td>охват</td></tr>
+            <tr><td><code>parent_mode_entered</code></td><td>Верный PIN родителя</td><td>чистота данных</td></tr>
+            <tr><td><code>child_redirected</code></td><td>На входе выбран «Я ученик»</td><td>guardrail</td></tr>
+            <tr><td><code>digest_opened</code></td><td>Открыт экран недели</td><td>open rate</td></tr>
+            <tr><td><code>praise_sent</code></td><td>Похвала ушла ребёнку</td><td>WAEP</td></tr>
+            <tr><td><code>joint_task_done</code></td><td>Задание на 10 минут выполнено</td><td>WAEP</td></tr>
+            <tr><td><code>goal_set</code></td><td>Цель на неделю</td><td>WAEP</td></tr>
+            <tr><td><code>limit_context_viewed</code></td><td>Открыта карточка про лимит</td><td>монетизация</td></tr>
+            <tr><td><code>trial_started</code> / <code>offer_dismissed</code></td><td>Реакция на предложение</td><td>конверсия</td></tr>
+            <tr><td><code>digest_unsubscribed</code></td><td>Отписка</td><td>guardrail</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const FAMILIES = {
+    controller: { child:'Маша', grade:3, pronoun:'она', tasks:34, delta:+6, strong:'умножение на 7 и 8', stuck:'задачи на время: 3 ошибки подряд в среду',
+      limitDays:[0,0,1,1,0,0,0], week:[4,6,20,20,3,0,5], limitHits:4,
+      task:{title:'Во сколько выходим?', steps:['Спросите: «Если собираться 25 минут, а выйти нужно в 8:10, во сколько начинать?»','Пусть Маша покажет ответ на часах со стрелками','Поменяйтесь: теперь она загадывает вам']} },
+    invisible: { child:'Артём', grade:2, pronoun:'он', tasks:9, delta:-4, strong:'сложение в пределах 20', stuck:'не заходил с четверга',
+      limitDays:[0,0,0,0,0,0,0], week:[3,2,0,4,0,0,0], limitHits:0,
+      task:{title:'Сколько стоит покупка?', steps:['В магазине дайте Артёму посчитать две покупки: хлеб 54 ₽ и молоко 89 ₽','Спросите, хватит ли 150 ₽','Сдачу пусть пересчитает сам']} },
+    co_learner: { child:'Лиза', grade:4, pronoun:'она', tasks:52, delta:+3, strong:'дроби: сравнение', stuck:'английский: Present Simple, вопросы',
+      limitDays:[1,0,1,0,1,1,0], week:[20,8,20,11,20,20,0], limitHits:6,
+      task:{title:'Три вопроса за ужином', steps:['Лиза задаёт вам три вопроса на английском: Do you like…?','Вы отвечаете и задаёте ей свои','Если запнулась — подсказка в карточке темы']} },
+    delegating: { child:'Даня', grade:5, pronoun:'он', tasks:27, delta:+1, strong:'проценты', stuck:'заходит через ваш аккаунт: 11 из 12 входов за неделю',
+      limitDays:[0,1,0,0,1,0,0], week:[6,20,2,5,20,0,0], limitHits:2,
+      task:{title:'Скидка в магазине', steps:['Найдите вместе любой ценник со скидкой','Пусть Даня посчитает цену после скидки 15%','Проверьте на калькуляторе телефона']} }
+  };
+  const DAYS = ['пн','вт','ср','чт','пт','сб','вс'];
+  let seg = 'controller', st, events = [];
+  const $ = s => document.querySelector(s);
+  const view = $('#view');
+
+  function fresh(){ st = { screen:'gate', pin:'', opened:false, praise:false, joint:false, goal:null, offer:null, jointOpen:false, praiseOpen:false }; }
+
+  function log(event, props = {}) {
+    const f = FAMILIES[seg];
+    const e = { ts:new Date().toISOString(), event, family_segment:seg, child_grade:f.grade, ...props };
+    events.push(e);
+    const el = $('#log');
+    el.innerHTML = events.slice().reverse().map(x => {
+      const { ts, event, ...rest } = x;
+      return `<span class="ts">${ts.slice(11,19)}</span> <span class="ev">${event}</span> ${esc(JSON.stringify(rest))}`;
+    }).join('\n');
+    renderFunnel();
+  }
+  const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function toast(msg){ const t = $('#toast'); t.textContent = msg; t.dataset.show = 'true'; clearTimeout(toast.h); toast.h = setTimeout(() => t.dataset.show = 'false', 2200); }
+
+  function renderFunnel(){
+    const has = n => events.some(e => e.event === n);
+    const acted = ['praise_sent','joint_task_done','goal_set'].filter(has);
+    const steps = [
+      ['Доставлен','push в воскресенье, 20:00', has('digest_delivered')],
+      ['Родитель вошёл','PIN, а не ребёнок', has('parent_mode_entered')],
+      ['Открыт','экран недели', has('digest_opened')],
+      ['Действие','похвала, задание или цель', acted.length > 0],
+    ];
+    $('#funnel').innerHTML = steps.map(([b,s,on]) => `<div class="step" data-on="${on}"><span class="state">${on?'да':'—'}</span><b>${b}</b><small>${s}</small></div>`).join('');
+    const w = $('#waep');
+    w.textContent = acted.length ? 'да' : 'нет'; w.className = 'pill ' + (acted.length ? 'yes' : 'no');
+    $('#waepWhy').textContent = acted.length ? `Засчитано: ${acted.join(', ')}.` : 'Нужно одно действие: похвала, совместное задание или цель. Просмотр не считается.';
+  }
+
+  function render(){
+    const f = FAMILIES[seg];
+    if (st.screen === 'gate') {
+      view.innerHTML = `
+        <span class="eyebrow">Итоги недели готовы</span>
+        <h2>Кто открывает?</h2>
+        <p class="hint">Больше половины входов в родительский аккаунт делает ребёнок. Поэтому сначала спрашиваем.</p>
+        <div class="actions">
+          <button class="btn" id="asParent">Я родитель <span class="t">PIN</span></button>
+          <button class="btn" id="asChild">Я ${f.child}, ученик <span class="t">в приложение ученика</span></button>
+        </div>`;
+      $('#asParent').onclick = () => { st.screen = 'pin'; render(); };
+      $('#asChild').onclick = () => { log('child_redirected'); st.screen = 'child'; render(); };
+    }
+    else if (st.screen === 'child') {
+      view.innerHTML = `
+        <span class="eyebrow">Профиль ученика</span>
+        <h2>Привет, ${f.child}!</h2>
+        <p>Твои задания открываются в приложении ученика. Там же награды и прогресс. Родительский раздел закрыт PIN-кодом.</p>
+        <button class="back" id="toGate">← Назад к выбору</button>`;
+      $('#toGate').onclick = () => { st.screen = 'gate'; render(); };
+    }
+    else if (st.screen === 'pin') {
+      const dots = [0,1,2,3].map(i => `<span>${st.pin[i] ? '•' : ''}</span>`).join('');
+      view.innerHTML = `
+        <span class="eyebrow">Родительский режим</span>
+        <h2>Введите PIN</h2>
+        <div class="pin" aria-label="Введено цифр: ${st.pin.length}">${dots}</div>
+        <p class="hint">В прототипе PIN 1234.</p>
+        <div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k => k === '' ? '<span></span>' : `<button data-k="${k}" aria-label="${k === '⌫' ? 'Стереть' : k}">${k}</button>`).join('')}</div>`;
+      view.querySelectorAll('.pad button').forEach(b => b.onclick = () => {
+        const k = b.dataset.k;
+        if (k === '⌫') st.pin = st.pin.slice(0,-1); else if (st.pin.length < 4) st.pin += k;
+        if (st.pin.length === 4) {
+          if (st.pin === '1234') { log('parent_mode_entered', { method:'pin' }); st.screen = 'digest'; st.opened = true; log('digest_opened', { week:'2026-W39' }); }
+          else { toast('PIN не подошёл. Попробуйте ещё раз'); st.pin = ''; }
+        }
+        render();
+      });
+    }
+    else if (st.screen === 'digest') {
+      const up = f.delta >= 0;
+      const max = Math.max(...f.week, 20);
+      view.innerHTML = `
+        <span class="eyebrow">Неделя 22–28 сентября · ${f.grade} класс</span>
+        <h2>${f.child}: ${f.tasks} ${plural(f.tasks,'задание','задания','заданий')} за неделю</h2>
+        <div class="card">
+          <div class="fact"><span class="mark ${up?'m-up':'m-stuck'}">${up?'+':'−'}${Math.abs(f.delta)}</span><p>${up?'Больше':'Меньше'}, чем на прошлой неделе<small>обычно в ${f.grade} классе — 20–35 в неделю</small></p></div>
+          <div class="fact"><span class="mark m-str">✓</span><p>Получается: ${f.strong}</p></div>
+          <div class="fact"><span class="mark m-stuck">!</span><p>Трудно: ${f.stuck}</p></div>
+          <div><div class="bars" aria-hidden="true">${f.week.map((v,i) => `<div class="${f.limitDays[i]?'cap':''}" style="height:${Math.max(4, v/max*100)}%"></div>`).join('')}</div>
+          <div class="bars-l">${DAYS.map(d => `<span>${d}</span>`).join('')}</div></div>
+        </div>
+
+        <span class="eyebrow">Одно дело на эту неделю</span>
+        <div class="actions">
+          ${seg === 'delegating' && !st.goal ? `<button class="btn" id="childProfile">Сделать ${f.child === 'Даня' ? 'Дане' : f.child} свой вход <span class="t">1 минута</span></button>` : ''}
+          <button class="btn ${st.praise?'done':''}" id="praise">${st.praise ? 'Похвала отправлена' : 'Похвалить'} <span class="t">${st.praise ? '✓' : '1 тап'}</span></button>
+          ${st.praiseOpen && !st.praise ? `<div class="chips">${['Горжусь тобой','Молодец, что не сдаёшься','Умножение — огонь'].map(t => `<button class="chip" data-p="${t}">${t}</button>`).join('')}</div>` : ''}
+          <button class="btn ${st.joint?'done':''}" id="joint">${st.joint ? 'Сделали вместе' : 'Задание на 10 минут вместе'} <span class="t">${st.joint ? '✓' : f.task.title}</span></button>
+          ${st.jointOpen && !st.joint ? `<div class="card task"><h3>${f.task.title}</h3><ol>${f.task.steps.map(s => `<li>${s}</li>`).join('')}</ol><button class="btn primary" id="jointDone">Сделали</button></div>` : ''}
+          <button class="btn ${st.goal?'done':''}" id="goalBtn">${st.goal ? `Цель: ${st.goal} ${plural(st.goal,'день','дня','дней')} занятий` : 'Поставить цель на неделю'} <span class="t">${st.goal ? '✓' : 'дни с занятиями'}</span></button>
+          ${st.goalOpen && !st.goal ? `<div class="chips">${[3,5,7].map(n => `<button class="chip" data-g="${n}">${n} ${plural(n,'день','дня','дней')}</button>`).join('')}</div>` : ''}
+        </div>
+
+        ${f.limitHits ? `
+        <div class="card offer">
+          <h3>${f.child} ${f.limitHits} ${plural(f.limitHits,'раз','раза','раз')} ${f.pronoun === 'она' ? 'упиралась' : 'упирался'} в лимит</h3>
+          <p>Бесплатно — 20 заданий в день. Дни с лимитом отмечены на графике. ${st.offer === 'trial' ? '' : 'С подпиской можно заниматься без ограничений.'}</p>
+          ${st.offer === null ? `<div class="actions"><button class="btn primary" id="trial">7 дней без лимита бесплатно</button><button class="btn" id="dismiss">Не сейчас <span class="t">напомним через месяц</span></button></div>`
+            : `<p class="hint">${st.offer === 'trial' ? 'Пробный период включён. Дальше — от 290 ₽ в месяц, отменить можно в любой момент.' : 'Хорошо, не будем напоминать до конца октября.'}</p>`}
+        </div>` : ''}
+
+        <button class="back" id="unsub" style="color:var(--muted);font-weight:500;font-size:13px">Присылать реже или отписаться</button>`;
+
+      const on = (id, fn) => { const el = $('#' + id); if (el) el.onclick = fn; };
+      on('praise', () => { if (!st.praise) { st.praiseOpen = !st.praiseOpen; render(); } });
+      view.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { st.praise = true; log('praise_sent', { sticker:b.dataset.p }); toast(`${f.child} увидит похвалу при следующем входе`); render(); });
+      on('joint', () => { if (!st.joint) { st.jointOpen = !st.jointOpen; render(); } });
+      on('jointDone', () => { st.joint = true; log('joint_task_done', { task:f.task.title }); toast('Отмечено. Следующее задание придёт в воскресенье'); render(); });
+      on('goalBtn', () => { if (!st.goal) { st.goalOpen = !st.goalOpen; render(); } });
+      view.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { st.goal = +b.dataset.g; log('goal_set', { days_per_week:st.goal }); toast(`${f.child} увидит цель в приложении`); render(); });
+      on('childProfile', () => { log('child_profile_created'); toast('Ссылка для входа ребёнка отправлена'); });
+      on('trial', () => { log('limit_context_viewed', { limit_hits:f.limitHits }); log('trial_started', { source:'digest_context' }); st.offer = 'trial'; render(); });
+      on('dismiss', () => { log('limit_context_viewed', { limit_hits:f.limitHits }); log('offer_dismissed'); st.offer = 'no'; render(); });
+      on('unsub', () => { st.screen = 'unsub'; render(); });
+    }
+    else if (st.screen === 'unsub') {
+      view.innerHTML = `
+        <span class="eyebrow">Настройки дайджеста</span>
+        <h2>Как часто присылать?</h2>
+        <div class="actions">
+          <button class="btn" data-fr="biweekly">Раз в две недели</button>
+          <button class="btn" data-fr="monthly">Раз в месяц</button>
+          <button class="btn" data-fr="off">Не присылать</button>
+        </div>
+        <button class="back" id="toDigest">← Вернуться к неделе</button>`;
+      view.querySelectorAll('[data-fr]').forEach(b => b.onclick = () => {
+        const fr = b.dataset.fr;
+        log(fr === 'off' ? 'digest_unsubscribed' : 'digest_frequency_changed', { frequency:fr });
+        toast(fr === 'off' ? 'Больше не присылаем. Вернуть можно в настройках' : 'Сохранили'); st.screen = 'digest'; render();
+      });
+      $('#toDigest').onclick = () => { st.screen = 'digest'; render(); };
+    }
+  }
+
+  function plural(n, one, few, many){ const a = Math.abs(n) % 100, b = a % 10; if (a > 10 && a < 20) return many; if (b > 1 && b < 5) return few; if (b === 1) return one; return many; }
+
+  function start(){
+    fresh(); events = []; $('#log').textContent = '';
+    log('digest_delivered', { channel:'push', sent_at_local:'20:00' });
+    render();
+  }
+
+  document.querySelectorAll('[data-seg]').forEach(b => b.onclick = () => {
+    seg = b.dataset.seg;
+    document.querySelectorAll('[data-seg]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    start();
+  });
+  $('#reset').onclick = start;
+  $('#copy').onclick = () => {
+    const txt = JSON.stringify(events, null, 2);
+    navigator.clipboard?.writeText(txt).then(() => toast('JSON событий скопирован')).catch(() => {
+      const r = document.createRange(); r.selectNodeContents($('#log')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Выделил журнал, скопируйте вручную');
+    });
+  };
+  start();
+})();
+</script>
+
+</body></html>
